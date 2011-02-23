@@ -10,5 +10,6 @@ class SearchedPagesDataset < Dataset::Base
     end
     create_page "Documentation", :body => 'This is the documentation section.'
     create_page "Search", :body => "This is the search section.", :class_name => 'SearchPage'
+    create_page "Case sensitive", :body => "ThiS Is A Case SensiTive pAge.", :slug => 'cAsE-seNSiTiVe'
   end
 end

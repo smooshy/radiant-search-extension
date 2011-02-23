@@ -59,5 +59,65 @@ describe SearchPage do
       @page.query_result.should_not include pages(:documentation)
       @page.query_result.should_not include pages(:ruby_home_page)
     end
+
+    describe "exlude using regular expressions" do
+      before :each do
+        Radiant::Config['search.exclude_using_regex?'] = true
+      end
+
+      it "should not include pages with a URL matching a pattern in exclude_page" do
+        exclude_regex = "docu"
+        @page.request.query_parameters = {
+          :q => "documentation",
+          :exclude_pages => exclude_regex
+        }
+        Rails::logger.info "Query_parameters set to #{@page.request.query_parameters}"
+
+        @page.render
+        @page.query_result.should_not include pages(:documentation)
+      end
+
+      it "should not include pages with a URL matching multiple patterns in exclude_page" do
+        exclude_regex = "^/docu,home"
+        @page.request.query_parameters = {
+          :q => "This",
+          :exclude_pages => exclude_regex
+        }
+        Rails::logger.info "Query_parameters set to #{@page.request.query_parameters}"
+
+        @page.render
+        @page.query_result.should_not include pages(:documentation)
+        @page.query_result.should_not include pages(:ruby_home_page)
+      end
+
+      it "should not include pages with a URL matching a case-sensitive pattern" do
+        Radiant::Config['search.exclude_using_regex.ignore_case?'] = false
+        exclude_regex = "rUBy,cAsE"
+        @page.request.query_parameters = {
+          :q => "This",
+          :exclude_pages => exclude_regex
+        }
+        Rails::logger.info "Query_parameters set to #{@page.request.query_parameters}"
+
+        @page.render
+        @page.query_result.should include pages(:ruby_home_page)
+        @page.query_result.should_not include pages(:case_sensitive)
+      end
+
+      it "should include pages with a URL not matching a case-insensitive pattern" do
+        # Radiant::Config['search.exclude_using_regex.ignore_case?'] = true # default
+        exclude_regex = "rUBy,case"
+        @page.request.query_parameters = {
+          :q => "This",
+          :exclude_pages => exclude_regex
+        }
+        Rails::logger.info "Query_parameters set to #{@page.request.query_parameters}"
+
+        @page.render
+        @page.query_result.should include pages(:documentation)
+        @page.query_result.should_not include pages(:ruby_home_page)
+        @page.query_result.should_not include pages(:case_sensitive)
+      end
+    end
   end
 end

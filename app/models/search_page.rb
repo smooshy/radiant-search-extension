@@ -95,7 +95,18 @@ class SearchPage < Page
     @query_result = []
     @query = ""
     q = @request.parameters[:q]
-    exclude_pages = (@request.parameters[:exclude_pages] || '').split(',')
+    exclude_with_regex = Radiant::Config['search.exclude_using_regex?'] ? Radiant::Config['search.exclude_using_regex?'] : false
+    exclude_regex_ignore_case = !Radiant::Config['search.exclude_using_regex.ignore_case?'].nil? ? Radiant::Config['search.exclude_using_regex.ignore_case?'] : true
+    exclude_pages_param = @request.parameters[:exclude_pages] || ''
+    if exclude_with_regex
+      exclude_pages = Array.new
+      regex_options = exclude_regex_ignore_case ? Regexp::IGNORECASE : nil
+      exclude_pages_param.split(',').each do |regex|
+        exclude_pages << Regexp.new(regex, regex_options)
+      end
+    else
+      exclude_pages = exclude_pages_param.split(',')
+    end
     case Page.connection.adapter_name.downcase
     when 'postgresql'
       sql_content_check = "((lower(page_parts.content) ILIKE ?) OR (lower(title) ILIKE ?))"
@@ -107,8 +118,9 @@ class SearchPage < Page
       pages = Page.find(:all, :order => 'published_at DESC', :include => [ :parts ],
           :conditions => [(["#{sql_content_check}"] * tokens.size).join(" AND "), 
                          *tokens.collect { |token| [token] * 2 }.flatten])
-      @query_result = pages.delete_if { |p| !p.published? ||
-          exclude_pages.include?(p.url)}
+      @query_result = pages.delete_if {
+        |p| !p.published? || (exclude_with_regex && exclude_pages.detect {|regex| p.url =~ regex }) || exclude_pages.include?(p.url)
+      }
     end
     lazy_initialize_parser_and_context
     if layout
