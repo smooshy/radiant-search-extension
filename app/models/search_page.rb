@@ -96,6 +96,7 @@ class SearchPage < Page
     @query = ""
     q = @request.parameters[:q]
     exclude_with_regex = Radiant::Config['search.exclude_using_regex?'] ? Radiant::Config['search.exclude_using_regex?'] : false
+    exclude_with_regex = @request.parameters[:exclude_using_regex] == "true" if @request.parameters[:exclude_using_regex] # overridable
     exclude_regex_ignore_case = !Radiant::Config['search.exclude_using_regex.ignore_case?'].nil? ? Radiant::Config['search.exclude_using_regex.ignore_case?'] : true
     exclude_pages_param = @request.parameters[:exclude_pages] || ''
     if exclude_with_regex
@@ -151,7 +152,7 @@ If you need to exclude some pages from the search results you can specify their 
 Optionally allows setting the CSS class of the button and text inputs for formatting.
 
 <pre><code><r:search:form [label=""] [url="/search"] 
-  [submit="Search"] [exclude_pages=""] 
+  [submit="Search"] [exclude_pages=""] [exclude_using_regex="true|false"]
   [box_class="CSS class name"] 
   [button_class="CSS class name"] /></code></pre>}
   tag 'search:form' do |tag|
@@ -161,8 +162,9 @@ Optionally allows setting the CSS class of the button and text inputs for format
     submit = "<input#{button_class} value=\"#{tag.attr['submit'] || "Search"}\" type=\"submit\" />"
     url = tag.attr['url'].nil? ? self.url.chop : tag.attr['url']
     exclude_pages_input = %{<input type="hidden" name="exclude_pages" value="#{CGI.escapeHTML(tag.attr['exclude_pages'])}" />}
+    exclude_pages_using_regex = %{<input type="hidden" name="exclude_using_regex" value="#{tag.attr['exclude_using_regex']}" />} unless tag.attr['exclude_using_regex'].nil?
     @query ||= ""
-    content = %{<form action="#{url}" method="get" id="search_form">#{exclude_pages_input}<p>#{label}<input type="text"#{box_class} id="q" name="q" value="#{CGI.escapeHTML(@query)}" size="15" alt="search"/> #{submit}</p></form>}
+    content = %{<form action="#{url}" method="get" id="search_form">#{exclude_pages_input}#{exclude_pages_using_regex}<p>#{label}<input type="text"#{box_class} id="q" name="q" value="#{CGI.escapeHTML(@query)}" size="15" alt="search"/> #{submit}</p></form>}    
     content << "\n"
   end
 

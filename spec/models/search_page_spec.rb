@@ -16,6 +16,10 @@ describe SearchPage do
     it "should escape value of exclude_pages field" do
       pages(:search).should render('<r:search:form exclude_pages=">" />').matching(%r{name="exclude_pages" value="&gt;"})
     end
+
+    it "should add exclude_using_regex parameter in hidden input" do
+      pages(:search).should render('<r:search:form exclude_pages="page" exclude_using_regex="true" />').matching(%r{<input type="hidden" name="exclude_using_regex" value="true"})
+    end
   end
 
   describe "render" do
@@ -117,6 +121,38 @@ describe SearchPage do
         @page.query_result.should include pages(:documentation)
         @page.query_result.should_not include pages(:ruby_home_page)
         @page.query_result.should_not include pages(:case_sensitive)
+      end
+
+      it "should not use a regular expression when overridden" do
+        exclude_regex = "docu"
+        @page.request.query_parameters = {
+          :q => "documentation",
+          :exclude_pages => exclude_regex,
+          :exclude_using_regex => "false"
+        }
+        Rails::logger.info "Query_parameters set to #{@page.request.query_parameters}"
+
+        @page.render
+        @page.query_result.should include pages(:documentation)
+      end
+    end
+
+    describe "using override for regular expression config" do
+      before :each do
+        Radiant::Config['search.exclude_using_regex?'] = false
+      end
+
+      it "should not include pages with a URL matching a pattern in exclude_pages" do
+        exclude_regex = "docu"
+        @page.request.query_parameters = {
+          :q => "documentation",
+          :exclude_pages => exclude_regex,
+          :exclude_using_regex => "true"
+        }
+        Rails::logger.info "Query_parameters set to #{@page.request.query_parameters}"
+
+        @page.render
+        @page.query_result.should_not include pages(:documentation)
       end
     end
   end
