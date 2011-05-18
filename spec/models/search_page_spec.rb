@@ -16,12 +16,24 @@ describe SearchPage do
     it "should escape value of exclude_pages field" do
       pages(:search).should render('<r:search:form exclude_pages=">" />').matching(%r{name="exclude_pages" value="&gt;"})
     end
+    
+    it "should use get method if not specified" do
+      pages(:search).should render('<r:search:form />').matching(%r{method="get"})
+    end
+    
+    it "should use get method if specified" do
+      pages(:search).should render('<r:search:form method="GET" />').matching(%r{method="get"})
+    end
+    
+    it "should use post method if specified" do
+      pages(:search).should render('<r:search:form method="pOSt" />').matching(%r{method="post"})
+    end
 
     it "should add exclude_using_regex parameter in hidden input" do
       pages(:search).should render('<r:search:form exclude_pages="page" exclude_using_regex="true" />').matching(%r{<input type="hidden" name="exclude_using_regex" value="true"})
     end
   end
-
+  
   describe "render" do
     before :each do
       @page = SearchPage.new

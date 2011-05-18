@@ -154,7 +154,7 @@ Optionally allows setting the CSS class of the button and text inputs for format
 <pre><code><r:search:form [label=""] [url="/search"] 
   [submit="Search"] [exclude_pages=""] [exclude_using_regex="true|false"]
   [box_class="CSS class name"] 
-  [button_class="CSS class name"] /></code></pre>}
+  [button_class="CSS class name"] [method="post"]/></code></pre>}
   tag 'search:form' do |tag|
     label = tag.attr['label'].nil? ? "" : "<label for=\"q\">#{tag.attr['label']}</label> "
     button_class = tag.attr['button_class'].nil? ? "" : " class=\"#{tag.attr['button_class']}\""
@@ -163,8 +163,9 @@ Optionally allows setting the CSS class of the button and text inputs for format
     url = tag.attr['url'].nil? ? self.url.chop : tag.attr['url']
     exclude_pages_input = %{<input type="hidden" name="exclude_pages" value="#{CGI.escapeHTML(tag.attr['exclude_pages'])}" />}
     exclude_pages_using_regex = %{<input type="hidden" name="exclude_using_regex" value="#{tag.attr['exclude_using_regex']}" />} unless tag.attr['exclude_using_regex'].nil?
+    form_method = (!tag.attr['method'].nil? && tag.attr['method'] =~ /POST/i) ? "post" : "get"
     @query ||= ""
-    content = %{<form action="#{url}" method="get" id="search_form">#{exclude_pages_input}#{exclude_pages_using_regex}<p>#{label}<input type="text"#{box_class} id="q" name="q" value="#{CGI.escapeHTML(@query)}" size="15" alt="search"/> #{submit}</p></form>}    
+    content = %{<form action="#{url}" method="#{form_method}" id="search_form">#{exclude_pages_input}#{exclude_pages_using_regex}<p>#{label}<input type="text"#{box_class} id="q" name="q" value="#{CGI.escapeHTML(@query)}" size="15" alt="search"/> #{submit}</p></form>}
     content << "\n"
   end
 
